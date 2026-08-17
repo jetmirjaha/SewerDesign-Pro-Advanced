@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SewerDesign Pro Advanced</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1>SewerDesign Pro Advanced</h1>
+    <p>Projektim orientues, profil, PDF dhe eksport GIS</p>
+  </div>
+  <div class="top-actions">
+    <button id="btnNew" class="secondary">Projekt i ri</button>
+    <button id="btnSave">Ruaj lokalisht</button>
+    <button id="btnLoad" class="secondary">Ngarko projektin</button>
+    <button id="btnExportProject" class="secondary">Eksporto JSON</button>
+  </div>
+</header>
+
+<main class="app-grid">
+  <aside class="panel left-panel">
+    <section>
+      <h2>1. Projekti</h2>
+      <label>Emri i projektit<input id="projectName" type="text" value="Projekt kanalizimi" /></label>
+      <div class="two-col">
+        <label>Popullsia aktuale<input id="population" type="number" value="1500" /></label>
+        <label>Periudha [vite]<input id="designYears" type="number" value="25" /></label>
+      </div>
+      <div class="two-col">
+        <label>Rritja vjetore [%]<input id="growthRate" type="number" step="0.01" value="1.2" /></label>
+        <label>Konsumi [l/banor/ditë]<input id="consumption" type="number" value="150" /></label>
+      </div>
+      <div class="two-col">
+        <label>Koef. kthimi<input id="returnCoefficient" type="number" step="0.01" value="0.80" /></label>
+        <label>Koef. pikut<input id="peakCoefficient" type="number" step="0.01" value="2.50" /></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Rregullat projektuese</h2>
+      <div class="two-col">
+        <label>Distanca max. pusetave [m]<input id="maxManholeDistance" type="number" value="50" /></label>
+        <label>Mbulimi minimal [m]<input id="minimumCover" type="number" step="0.05" value="1.20" /></label>
+      </div>
+      <div class="two-col">
+        <label>Pjerrësia projektuese [%]<input id="designSlope" type="number" step="0.01" value="0.60" /></label>
+        <label>DN minimal [mm]<input id="minimumDiameter" type="number" step="10" value="200" /></label>
+      </div>
+      <div class="two-col">
+        <label>Manning n<input id="manningN" type="number" step="0.001" value="0.011" /></label>
+        <label>Infiltrimi [l/s]<input id="infiltration" type="number" step="0.01" value="0" /></label>
+      </div>
+      <label>Sistemi koordinativ / EPSG
+        <input id="projectCrs" type="text" value="EPSG:9141" readonly />
+      </label>
+      <label>Renditja e koordinatave në fajll
+        <select id="coordinateOrder">
+          <option value="NE" selected>X = Northing, Y = Easting</option>
+          <option value="EN">X = Easting, Y = Northing</option>
+        </select>
+      </label>
+      <p class="help">Për të dhënat tua: X ≈ 4,700,000 dhe Y ≈ 7,450,000, prandaj përdoret X=Northing dhe Y=Easting.</p>
+    </section>
+
+    <section>
+      <h2>3. Importi masiv</h2>
+      <p class="help">Pranon CSV/TXT me presje, pikëpresje, tab ose hapësira. Formati: <code>id x y z description</code>. Mbi 2,000 pika përpunohen në analizë.</p>
+      <input id="pointsFile" type="file" accept=".csv,.txt,text/plain,text/csv" />
+
+      <div class="kml-import-box">
+        <label>Import opsional nga Google Earth KML
+          <input id="kmlFile" type="file" accept=".kml,application/vnd.google-earth.kml+xml" />
+        </label>
+        <div class="two-col">
+          <label>Reduktimi i pikave
+            <select id="kmlSampling">
+              <option value="1">Të gjitha pikat</option>
+              <option value="2">Çdo pikë të dytë</option>
+              <option value="5">Çdo pikë të pestë</option>
+              <option value="10">Çdo pikë të dhjetë</option>
+            </select>
+          </label>
+          <label>Kuota rezervë [m]
+            <input id="defaultKmlElevation" type="number" step="0.01" value="0" />
+          </label>
+        </div>
+        <label class="inline-check">
+          <input id="autoFetchElevation" type="checkbox" checked />
+          Merr automatikisht kuotat e terrenit kur KML ka Z=0
+        </label>
+        <label class="inline-check">
+          <input id="overwriteZeroOnly" type="checkbox" checked disabled />
+          Ruaj kuotat ekzistuese; zëvendëso vetëm zerot/mungesat
+        </label>
+        <div id="elevationProgress" class="messages"></div>
+        <p class="help">Kuotat automatike merren nga modeli global Copernicus DEM. Për projekt përfundimtar verifikohen me matje gjeodezike.</p>
+      </div>
+
+      <div class="button-row">
+        <button id="btnSample" class="secondary">Vendos shembull</button>
+        <button id="btnAddPoint" class="secondary">Shto pikë</button>
+      </div>
+      <div id="importStats" class="messages"></div>
+    </section>
+
+    <section>
+      <h2>4. Përpunimi</h2>
+      <button id="btnCalculate" class="primary wide">Gjenero projektin</button>
+      <div id="messages" class="messages" aria-live="polite"></div>
+    </section>
+
+    <section>
+      <h2>5. Eksporti</h2>
+      <button id="btnPdf" class="secondary wide">Ruaj pjesët e zgjedhura si PDF</button>
+      <div class="pdf-options">
+        <label><input type="checkbox" class="pdf-part" value="summary" checked /> Përmbledhja</label>
+        <label><input type="checkbox" class="pdf-part" value="profile" checked /> Profili</label>
+        <label><input type="checkbox" class="pdf-part" value="manholes" checked /> Pusetat</label>
+        <label><input type="checkbox" class="pdf-part" value="segments" checked /> Segmentet</label>
+      </div>
+      <button id="btnStakeoutGround" class="secondary wide">CSV piketimi – Z terreni (PNEZD)</button>
+      <button id="btnStakeoutInvert" class="secondary wide">CSV piketimi – Z fundi (PNEZD)</button>
+      <button id="btnExportDxf3D" class="secondary wide">Eksporto DXF 3D për Civil 3D</button>
+      <button id="btnExportLandXml" class="secondary wide">Eksporto LandXML (Alignment + profile)</button>
+      <button id="btnExportGeoJson3D" class="secondary wide">Eksporto GeoJSON 3D</button>
+      <button id="btnShapeManholes" class="secondary wide">Shkarko pusetat Shapefile</button>
+      <button id="btnShapeLines" class="secondary wide">Shkarko vijat Shapefile</button>
+      <p class="help">CSV përdor renditjen P,N,E,Z,D për import të pikave në Civil 3D. DXF dhe LandXML ruhen me koordinata reale në EPSG:9141. Shapefile krijohet si ZIP dhe kërkon internet për bibliotekën e eksportit.</p>
+    </section>
+  </aside>
+
+  <section class="workspace">
+    <div class="tabs">
+      <button class="tab active" data-tab="pointsTab">Pikat</button>
+      <button class="tab" data-tab="mapTab">Plani</button>
+      <button class="tab" data-tab="profileTab">Profili</button>
+      <button class="tab" data-tab="resultsTab">Rezultatet</button>
+    </div>
+
+    <div id="pointsTab" class="tab-content active">
+      <div class="section-header">
+        <div><h2>Pikat e matura</h2><p>Shfaqen 500 rreshtat e parë për performancë; të gjitha pikat analizohen.</p></div>
+        <button id="btnClearPoints" class="danger ghost">Pastro pikat</button>
+      </div>
+      <div class="table-wrap">
+        <table id="pointsTable">
+          <thead><tr><th>Nr.</th><th>ID</th><th>X</th><th>Y</th><th>Z</th><th>Përshkrimi</th><th>Veprim</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="mapTab" class="tab-content">
+      <svg id="planSvg" class="plan-svg" viewBox="0 0 1000 560"></svg>
+    </div>
+
+    <div id="profileTab" class="tab-content">
+      <div class="section-header">
+        <div><h2>Profili gjatësor</h2><p>Terreni dhe kuota e fundit të gypit.</p></div>
+        <button id="btnExportProfile" class="secondary">Ruaj SVG</button>
+      </div>
+      <svg id="profileSvg" class="profile-svg" viewBox="0 0 1100 560"></svg>
+    </div>
+
+    <div id="resultsTab" class="tab-content">
+      <div id="summaryCards" class="cards"></div>
+      <h2>Pusetat</h2>
+      <div class="table-wrap"><table id="manholesTable">
+        <thead><tr><th>Puseta</th><th>Stacionazha</th><th>X</th><th>Y</th><th>Z terreni</th><th>Z fundi</th><th>Thellësia</th></tr></thead>
+        <tbody></tbody></table></div>
+
+      <div class="section-header results-heading"><h2>Segmentet</h2><button id="btnExportCsv" class="secondary">Eksporto CSV</button></div>
+      <div class="table-wrap"><table id="segmentsTable">
+        <thead><tr><th>Segmenti</th><th>Gjatësia [m]</th><th>Pjerrësia [%]</th><th>DN nominal [mm]</th><th>Kapaciteti [l/s]</th><th>Q [l/s]</th><th>Statusi</th></tr></thead>
+        <tbody></tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<footer><strong>Vërejtje:</strong> Dimensionimi është orientues dhe duhet verifikuar sipas standardeve dhe kushteve teknike në fuqi.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.js"></script>
+<script src="https://unpkg.com/@mapbox/shp-write@0.4.3/shpwrite.js"></script>
+<script src="js/calculations.js"></script>
+<script src="js/drawing.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
