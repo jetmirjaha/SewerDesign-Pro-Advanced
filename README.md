@@ -138,6 +138,7 @@ Modeli është global me rezolucion rreth 90 m. Është i përshtatshëm për ko
 - **CSV piketimi – Z terreni (PNEZD):** renditja `Point, Northing, Easting, Elevation, Description`.
 - **CSV piketimi – Z fundi (PNEZD):** koordinatat e njëjta, por Elevation është kuota projektuese e fundit të pusetës.
 - **DXF 3D:** përmban aksin e kanalit si 3D Polyline në kuotën e fundit, pikat e terrenit, pikat e fundit dhe etiketat.
+- **Profili gjatësor DXF 2D:** përmban terrenin dhe fundin e gypit si polivija, vijat e pusetave, rrjetin dhe tekstet si elemente të integruara në DXF; nuk varet nga JPG/SVG i jashtëm.
 - **LandXML:** përmban Alignment, profilin e terrenit, profilin projektues të fundit dhe COGO points të pusetave.
 - **GeoJSON 3D:** pusetat dhe segmentet me koordinata `[Easting, Northing, Z]`.
 
